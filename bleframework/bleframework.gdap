@@ -1,0 +1,6 @@
+[config]
+
+name="BLEPlugin"
+binary_type="local"
+binary="bleframework-debug.aar"
+
