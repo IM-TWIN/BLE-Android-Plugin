@@ -208,7 +208,7 @@ public class GodotBLE extends GodotPlugin
 
     @NonNull
     @Override
-    public String getPluginName() { return "BLEPluginMultiple"; }
+    public String getPluginName() { return "BLEPlugin"; }
 
     @NonNull
     @Override
