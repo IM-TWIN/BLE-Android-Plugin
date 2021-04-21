@@ -1,7 +1,7 @@
 # BLE Android Plugin
 
 This repository contains an Android plugin that gives the possibility to use BLE in Godot.
-The module to build and use is the one contained in the directory *bleframework*.
+The module to build and use is the one contained in the directory `bleframework/`.
 
 
 ## Setup
@@ -16,7 +16,7 @@ In order to be able to build an Android application, you need to set up the Godo
 
 ### Loading the plugin
 
-Move the plugin configuration file (*bleframework/bleframework.gdap*) and the local binary (*bleframework/build/outputs/aar/bleframework-debug.aar*) that you generated to the Godot project's `res://android/plugins` directory (if the do not exist, create them).
+Move the plugin configuration file (`bleframework/bleframework.gdap`) and the local binary (`bleframework/build/outputs/aar/bleframework-debug.aar`) that you generated to the Godot project's `res://android/plugins` directory (if the do not exist, create them).
 The Godot editor will automatically parse the **.gdap** file and show our plugin **"BLE Plugin"** in the Android export presets window under the **Plugins** section.
 Once you enable it, you can use it in your code as explained in the next section.
 
