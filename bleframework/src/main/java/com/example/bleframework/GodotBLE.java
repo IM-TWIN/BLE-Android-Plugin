@@ -3,6 +3,7 @@ package com.example.bleframework;
 import android.Manifest;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
@@ -71,7 +72,7 @@ public class GodotBLE extends GodotPlugin
             .build();
 
     //List of devices found during the last scanning
-    private List<ScanResult> scanResults;
+    private List<BluetoothDevice> scanResults;
 
     // Device scan callback
     private ScanCallback leScanCallback =
@@ -82,13 +83,18 @@ public class GodotBLE extends GodotPlugin
                 {
                     Log.i("SCANNING", "found device " + result.getDevice().getName() + "with address " + result.getDevice().getAddress());
 
-                    // Send a signal to Godot with name and address of the device found
-                    if(result.getDevice().getName() != null)
-                        emitSignal("device_found", result.getDevice().getName(), result.getDevice().getAddress());
-                    else
-                        emitSignal("device_found", "", result.getDevice().getAddress());
+                    BluetoothDevice device = result.getDevice();
+                    if(scanResults.indexOf(device) == -1)
+                    {
+                        // Send a signal to Godot with name and address of the device found
+                        if(result.getDevice().getName() != null)
+                            emitSignal("device_found", device.getName(), device.getAddress());
+                        else
+                            emitSignal("device_found", "", device.getAddress());
 
-                    scanResults.add(result); //add the result to the list
+                        scanResults.add(result.getDevice()); //add the result to the list
+                    }
+
                 }
 
                 @Override
@@ -365,10 +371,11 @@ public class GodotBLE extends GodotPlugin
      */
     public void connectToDeviceByAddress(String deviceAddress)
     {
-        for(ScanResult r : scanResults) //Search for the device with that address
-            if(r.getDevice().getAddress().equals(deviceAddress))
+        //Search for the device with that address
+        for(BluetoothDevice r : scanResults)
+            if(r.getAddress().equals(deviceAddress))
             {   // connect
-                r.getDevice().connectGatt(activity, false, gattCallback);
+                r.connectGatt(activity, false, gattCallback);
                 return;
             }
     }
@@ -380,13 +387,13 @@ public class GodotBLE extends GodotPlugin
      */
     public void connectToDeviceByName(String deviceName)
     {
-        for(ScanResult r : scanResults)
+        for(BluetoothDevice r: scanResults)
         {   //look for the desired device
-            String name = r.getDevice().getName();
+            String name = r.getName();
             if(name == null) continue;
             else if(name.equals(deviceName))
             {   //connect
-                r.getDevice().connectGatt(activity, false, gattCallback);
+                r.connectGatt(activity, false, gattCallback);
                 return;
             }
         }
