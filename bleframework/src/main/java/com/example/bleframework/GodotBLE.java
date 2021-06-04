@@ -121,6 +121,7 @@ public class GodotBLE extends GodotPlugin
                         {
                             Log.w("BluetoothGattCallback", "Successfully connected to ".concat(deviceAddress));
                             bluetoothGatts.put(deviceAddress, gatt); //save the instance of the BluetoothGatt for this connection
+                            //gatt.requestMtu(40);
                             gatt.discoverServices(); //discover services of the device we are connected to
                             emitSignal("device_connected", deviceAddress); //send a signal to Godot to say that the connection was successfull
                         }
@@ -172,8 +173,10 @@ public class GodotBLE extends GodotPlugin
                 @Override //Called every time a write with response is performed
                 public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status)
                 {
-                    if(status == BluetoothGatt.GATT_SUCCESS)
+                    if(status == BluetoothGatt.GATT_SUCCESS) {
                         Log.i("BluetoothGattCallback", "Wrote to characteristic ".concat(characteristic.getUuid().toString()));
+                        emitSignal("characteristic_written", gatt.getDevice().getAddress(), characteristic.getUuid().toString());
+                    }
                     else if(status == BluetoothGatt.GATT_INVALID_ATTRIBUTE_LENGTH)
                         Log.e("BluetoothGattCallback", "Write exceeded connection ATT MTU!");
                     else if(status == BluetoothGatt.GATT_WRITE_NOT_PERMITTED)
@@ -258,6 +261,7 @@ public class GodotBLE extends GodotPlugin
         signals.add(new SignalInfo("device_connected", String.class));
         signals.add(new SignalInfo("device_disconnected", String.class));
         signals.add(new SignalInfo("characteristic_read", String.class, String.class, byte[].class));
+        signals.add(new SignalInfo("characteristic_written", String.class, String.class));
         signals.add(new SignalInfo("characteristic_changed", String.class, String.class, byte[].class));
         signals.add(new SignalInfo("service_discovery_success", String.class));
 
