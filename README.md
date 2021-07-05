@@ -1,36 +1,36 @@
 # BLE Android Plugin
 
-This repository contains an Android plugin that gives the possibility to use BLE in Godot.
+This repository contains an Android plugin that gives the possibility to use BLE in [Godot applications](https://godotengine.org).
 The module to build and use is the one contained in the directory `bleframework/`.
 
 
 ## Setup
 
-### Building the plugin in Android studio
+### Building the plugin in Android Studio
 
-Open this repository with Android Studio, and then build the module **bleframework**. Once the operation is done, you will find the **Android archive library** (*aar* archive file) in *bleframework/build/outputs/aar/*.
+After downloading this repository, open the relative folder with Android Studio, and then build the module **bleframework**. Once the operation is done, you will find the **Android archive library** (*aar* archive file) in *bleframework/build/outputs/aar/*.
 
 ### Android Environment in Godot
 
-In order to be able to build an Android application, you need to set up the Godot environment as explained [here](https://docs.godotengine.org/it/stable/getting_started/workflow/export/android_custom_build.html).
+In order to build an Android application, you need to set up the Godot environment as explained [here](https://docs.godotengine.org/it/stable/getting_started/workflow/export/android_custom_build.html).
 
 ### Loading the plugin
 
-Move the plugin configuration file (`bleframework/bleframework.gdap`) and the local binary (`bleframework/build/outputs/aar/bleframework-debug.aar`) that you generated to the Godot project's `res://android/plugins` directory (if the do not exist, create them).
+Move the plugin configuration file (`bleframework/bleframework.gdap`) and the local binary (`bleframework/build/outputs/aar/bleframework-debug.aar`) that you generated to the Godot project's `res://android/plugins` directory (if they do not exist, create them).
 The Godot editor will automatically parse the **.gdap** file and show our plugin **"BLE Plugin"** in the Android export presets window under the **Plugins** section.
 Once you enable it, you can use it in your code as explained in the next section.
 
 ## How to use the plugin
 
-The plugin makes available the main functionalities for a Android device (central) to connect and communicate with a peripheral.
+The plugin makes available the main functionalities for an Android device (central) to connect and communicate with a peripheral.
 The main functionalities are:
 - start scanning / stop scanning
 - set filters for the scanning
 - connect/disconnect to/from a device
-- enable/disable characterisitc's notifications (and receive them)
+- enable/disable characteristic's notifications (and receive them)
 - read/write a characteristic
 
-In order to use the plugin in Godot, in your script you have to retrieve the correspondent singleton, as shown below.
+To use the plugin in Godot, in your script you have to retrieve the correspondent singleton, as shown below.
 ``` gdnative
 if Engine.has_singleton("BLEPlugin"):
     var ble = Engine.get_singleton("BLEPlugin") 
@@ -39,7 +39,7 @@ if Engine.has_singleton("BLEPlugin"):
 
 The variable `ble` is the object that contains all the methods of the Java class, through which you can access the BLE operations.
 
-Since BLE uses many callbacks in Java, in those cases that they carry meaningful information a signal is emitted so that it can also be seen in Godot. In order to receive these signals and thus perform some actions, the signal has to be connected to a function in the Godot script as shown below.
+Since the Android BLE library uses many callbacks in Java, in those cases they carry meaningful information a signal is emitted so that it can also be seen in Godot. To receive these signals and thus perform some actions, the signal has to be connected to a function in the Godot script as shown below.
 ```gdnative
 ble.connect("device_found", self, "_on_dev_found")
 ```
