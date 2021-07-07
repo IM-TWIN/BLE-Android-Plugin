@@ -121,7 +121,6 @@ public class GodotBLE extends GodotPlugin
                         {
                             Log.w("BluetoothGattCallback", "Successfully connected to ".concat(deviceAddress));
                             bluetoothGatts.put(deviceAddress, gatt); //save the instance of the BluetoothGatt for this connection
-                            //gatt.requestMtu(40);
                             gatt.discoverServices(); //discover services of the device we are connected to
                             emitSignal("device_connected", deviceAddress); //send a signal to Godot to say that the connection was successfull
                         }
@@ -303,14 +302,6 @@ public class GodotBLE extends GodotPlugin
         {
             Intent enableLocation = new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS);
             activity.startActivityForResult(enableLocation, ENABLE_LOCATION_REQUEST_CODE);
-            /*AlertDialog.Builder builder = new AlertDialog.Builder();
-            builder.setMessage("Your GPS seems to be disabled, do you want to enable it?")
-                    .setCancelable(false)
-                    .setPositiveButton("Yes", (dialog, id) -> activity.startActivityForResult(new
-                            Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS), ENABLE_LOCATION_REQUEST_CODE))
-                    .setNegativeButton("No", (dialog, id) -> dialog.cancel());
-            AlertDialog alert = builder.create();
-            alert.show();*/
         }
     }
 
@@ -319,27 +310,39 @@ public class GodotBLE extends GodotPlugin
      * It adds the device name as filter for the scanning
      * @param deviceName
      */
-    public void addScanFilterDeviceName(String deviceName) { scanFilter = scanFilter.setDeviceName(deviceName); }
+    public void addScanFilterDeviceName(String deviceName)
+    {
+        scanFilter = scanFilter.setDeviceName(deviceName);
+    }
 
 
     /**
      * It adds the device address as filter for the scanning
      * @param deviceAddress
      */
-    public void addScanFilterDeviceAddress(String deviceAddress) { scanFilter = scanFilter.setDeviceAddress(deviceAddress); }
+    public void addScanFilterDeviceAddress(String deviceAddress)
+    {
+        scanFilter = scanFilter.setDeviceAddress(deviceAddress);
+    }
 
 
     /**
      * It adds a service UUID as filter for the scanning
      * @param serviceUUID
      */
-    public void addScanFilterService(String serviceUUID) { scanFilter = scanFilter.setServiceUuid(ParcelUuid.fromString(serviceUUID)); }
+    public void addScanFilterService(String serviceUUID)
+    {
+        scanFilter = scanFilter.setServiceUuid(ParcelUuid.fromString(serviceUUID));
+    }
 
 
     /**
      * It removes all the filters for the scanning
      */
-    public void resetScanFilters() { scanFilter = new ScanFilter.Builder(); }
+    public void resetScanFilters()
+    {
+        scanFilter = new ScanFilter.Builder();
+    }
 
 
     /**
