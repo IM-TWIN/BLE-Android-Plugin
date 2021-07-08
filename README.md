@@ -46,6 +46,9 @@ ble.connect("device_found", self, "_on_dev_found")
 In this way, when the signal "device_found" is emitted, the function "_on_dev_found" is instantly executed.
 
 ## Authors
-- [Francesca Romana Mattei](https://github.com/francescaromana)
-- [Massimiliano Schembri](https://github.com/schembrimax)
-![](/images/plusme_logo.png) ![](/images/imtwin-logo_2020.png)
+- [Francesca Romana Mattei](https://github.com/francescaromana) 
+- [Massimiliano Schembri](https://github.com/schembrimax) 
+
+[<img src="/images/plusme_logo.png" width="100">](https://www.plusme-h2020.eu) [<img src="/images/imtwin-logo_2020.png" width="125">](https://im-twin.eu)
+
+ 
