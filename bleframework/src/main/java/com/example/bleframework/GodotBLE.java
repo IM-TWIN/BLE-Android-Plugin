@@ -39,39 +39,49 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+/**
+ * This class represents the Plugin that will be loaded in Godot in order to exploit
+ * BLE functionalities in Android applications. Thanks to this class, an Android device can act
+ * as a central and connect to one or multiple peripherals, read/write their characteristics values
+ * and enable notifications.
+ *
+ * @author Francesca Romana Mattei
+ * @author Massimiliano Schembri
+ * @
+ */
 public class GodotBLE extends GodotPlugin
 {
     private Activity activity;
 
-    //codes for bluetooth and location enabling requests
+    // Codes for bluetooth and location enabling requests
     private final int ENABLE_BLUETOOTH_REQUEST_CODE = 1;
     private final int ENABLE_LOCATION_REQUEST_CODE = 2;
 
-    //UUID of the descriptor used to subscribe to a characteristic notifications
+    // UUID of the descriptor used to subscribe to a characteristic notifications
     private final String CCC_DESCRIPTOR_UUID = "00002902-0000-1000-8000-00805F9B34FB";
 
-    //Objects used to control Bluetooth operations on Android
+    // Objects used to control Bluetooth operations on Android
     private BluetoothManager bluetoothManager;
     private BluetoothAdapter bluetoothAdapter;
     private BluetoothLeScanner bluetoothLeScanner;
 
-    //True if a scan is being perfomed, false otherwise
+    // True if a scan is being perfomed, false otherwise
     private boolean isScanning = false;
 
-    //Mapping <device address, GATT object> in order to be able to communicate with more than one peripheral
+    // Mapping <device address, GATT object> in order to be able to communicate with more than one peripheral
     private Map<String, BluetoothGatt> bluetoothGatts = new HashMap<>();;
 
     // Maps to convert an UUID (String) to the corresponding Characterisitc/Service object
     private Map<String, Map<String, BluetoothGattCharacteristic>> characteristicMap = new HashMap<>();
     private Map<String, Map<String, BluetoothGattService>> serviceMap = new HashMap<>();
 
-    //Objects use to set the scanning options
+    // Objects use to set the scanning options
     private ScanFilter.Builder scanFilter = new ScanFilter.Builder();
     private ScanSettings scanSettings = new ScanSettings.Builder()
             .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
             .build();
 
-    //List of devices found during the last scanning
+    // List of devices found during the last scanning
     private List<BluetoothDevice> scanResults;
 
     // Device scan callback
