@@ -44,3 +44,8 @@ Since the Android BLE library uses many callbacks in Java, in those cases they c
 ble.connect("device_found", self, "_on_dev_found")
 ```
 In this way, when the signal "device_found" is emitted, the function "_on_dev_found" is instantly executed.
+
+## Authors
+- [Francesca Romana Mattei](https://github.com/francescaromana)
+- [Massimiliano Schembri](https://github.com/schembrimax)
+![](/images/plusme_logo.png) ![](/images/imtwin-logo_2020.png)
