@@ -50,14 +50,18 @@ In this way, when the signal "device_found" is emitted, the function "_on_dev_fo
 - [Massimiliano Schembri](https://github.com/schembrimax) 
 
 ## Funding
-<img align="left" src="/images/EU_logo.png" width="100"> This software is part of a project that has received funding from the European Union’s Horizon 2020 research and innovation programme under grant agreement No 952095 (www.im-twin.eu) and No 945887 (www.plusme-h2020.eu)
+<img align="left" src="/images/EU_logo.png" width="100"> This software is part of two projects that have received funding from the European Union’s Horizon 2020 research and innovation programme under grant agreement No 952095 and No 945887
 
 
-
+<p>&nbsp;</p>
 <img align="left" src="/images/imtwin-logo_2020.png" width="125"> *from Intrinsic Motivations to Transitional Wearable INtelligent companions for autism spectrum disorder*
 
+www.im-twin.eu
 
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<img align="left" src="/images/plusme_logo.png" width="100"> *PlusMe: Transitional Wearable Companions for the therapy of children with Autism Spectrum Disorders*
 
-<img align="left" src="/images/plusme_logo.png" width="100"> *PlusMe: Transitional Wearable Companions for the therapy of children with Autism Spectrum Disorders* 
+www.plusme-h2020.eu 
 
 
