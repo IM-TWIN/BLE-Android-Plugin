@@ -54,13 +54,13 @@ In this way, when the signal "device_found" is emitted, the function "_on_dev_fo
 
 
 <p>&nbsp;</p>
-<img align="left" src="/images/imtwin-logo_2020.png" width="125"> *from Intrinsic Motivations to Transitional Wearable INtelligent companions for autism spectrum disorder*
+<img align="left" src="/images/imtwin-logo_2020.png" width="100"> *from Intrinsic Motivations to Transitional Wearable INtelligent companions for autism spectrum disorder*
 
 www.im-twin.eu
 
 <p>&nbsp;</p>
 <p>&nbsp;</p>
-<img align="left" src="/images/plusme_logo.png" width="100"> *PlusMe: Transitional Wearable Companions for the therapy of children with Autism Spectrum Disorders*
+<img align="left" src="/images/plusme_logo.png" width="85"> *PlusMe: Transitional Wearable Companions for the therapy of children with Autism Spectrum Disorders*
 
 www.plusme-h2020.eu 
 
