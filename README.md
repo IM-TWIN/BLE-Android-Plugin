@@ -49,6 +49,10 @@ In this way, when the signal "device_found" is emitted, the function "_on_dev_fo
 - [Francesca Romana Mattei](https://github.com/francescaromana) 
 - [Massimiliano Schembri](https://github.com/schembrimax) 
 
+## Licence
+
+Mit?
+
 ## Funding
 <img align="left" src="/images/EU_logo.png" width="100"> This software is part of two projects that have received funding from the European Union’s Horizon 2020 research and innovation programme under grant agreement No 952095 and No 945887
 
