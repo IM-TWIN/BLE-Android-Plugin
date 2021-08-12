@@ -51,7 +51,7 @@ In this way, when the signal "device_found" is emitted, the function "_on_dev_fo
 
 ## Licence
 
-Mit?
+The provided software is free and open source,and released under MIT licence.
 
 ## Funding
 <img align="left" src="/images/EU_logo.png" width="100"> This software is part of two projects that have received funding from the European Union’s Horizon 2020 research and innovation programme under grant agreement No 952095 and No 945887
