@@ -51,29 +51,21 @@ In this way, when the signal "device_found" is emitted, the function "_on_dev_fo
 
 ## Licence
 
-The provided software is free and open source,and released under MIT licence.
-
-> Copyright 2021,  [ImTwin](www.im-twin.eu) and [PlusMe](www.plusme-h2020.eu) European projects
->
->Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
->
->The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
->
->THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+This software is released under MIT license - see the [LICENSE](https://github.com/IM-TWIN/BLE-Android-Plugin/blob/main/LICENSE) file for details.
 
 ## Funding
 <img align="left" src="/images/EU_logo.png" width="100"> This software is part of two projects that have received funding from the European Union’s Horizon 2020 research and innovation programme under grant agreement No 952095 and No 945887
 
-
 <p>&nbsp;</p>
+
 <img align="left" src="/images/imtwin-logo_2020.png" width="100"> *from Intrinsic Motivations to Transitional Wearable INtelligent companions for autism spectrum disorder*
 
 www.im-twin.eu
 
 <p>&nbsp;</p>
-<p>&nbsp;</p>
-<img align="left" src="/images/plusme_logo.png" width="85"> *PlusMe: Transitional Wearable Companions for the therapy of children with Autism Spectrum Disorders*
 
-www.plusme-h2020.eu 
+<img align="left" src="/images/plusme_logo.png" width="85"> &nbsp;&nbsp;&nbsp;*PlusMe: Transitional Wearable Companions for the therapy of children with Autism Spectrum Disorders*
+
+&nbsp;&nbsp;&nbsp;www.plusme-h2020.eu 
 
 
