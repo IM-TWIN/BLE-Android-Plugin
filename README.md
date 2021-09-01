@@ -64,7 +64,7 @@ www.im-twin.eu
 
 <p>&nbsp;</p>
 
-<img align="left" src="/images/plusme_logo.png" width="85"> &nbsp;&nbsp;&nbsp;*PlusMe: Transitional Wearable Companions for the therapy of children with Autism Spectrum &nbsp;Disorders*
+<img align="left" src="/images/plusme_logo.png" width="85"> &nbsp;&nbsp;&nbsp;*PlusMe: Transitional Wearable Companions for the therapy of children with Autism Spectrum &nbsp;&nbsp;Disorders*
 
 &nbsp;&nbsp;&nbsp;www.plusme-h2020.eu 
 
