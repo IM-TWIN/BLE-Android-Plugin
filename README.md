@@ -49,7 +49,7 @@ In this way, when the signal "device_found" is emitted, the function "_on_dev_fo
 - [Francesca Romana Mattei](https://github.com/francescaromana) 
 - [Massimiliano Schembri](https://github.com/schembrimax) 
 
-## Licence
+## License
 
 This software is released under MIT license - see the [LICENSE](https://github.com/IM-TWIN/BLE-Android-Plugin/blob/main/LICENSE) file for details.
 
