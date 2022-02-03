@@ -1,4 +1,4 @@
-# BLE Android Plugin
+# BLE Android Plugin for Godot Engine
 
 This repository contains an Android plugin that gives the possibility to use BLE in [Godot applications](https://godotengine.org).
 The module to build and use is the one contained in the directory `bleframework/`.
