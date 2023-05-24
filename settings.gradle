@@ -1,4 +1,3 @@
-include ':godot-lib.release'
 include ':bleframework'
 include ':app'
 rootProject.name = "BLEPlugin"
