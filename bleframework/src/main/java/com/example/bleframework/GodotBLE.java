@@ -2,7 +2,6 @@ package com.example.bleframework;
 
 import android.Manifest;
 import android.app.Activity;
-import android.app.Instrumentation;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
@@ -20,29 +19,28 @@ import android.bluetooth.le.ScanSettings;
 import android.content.Context;
 import android.content.Intent;
 import android.location.LocationManager;
+import android.net.Uri;
 import android.os.ParcelUuid;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.collection.ArraySet;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.FileProvider;
 
 import org.godotengine.godot.Godot;
 import org.godotengine.godot.plugin.GodotPlugin;
 import org.godotengine.godot.plugin.SignalInfo;
+import org.godotengine.godot.plugin.UsedByGodot;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.LinkedList;
-import java.util.ListIterator;
 import java.util.Map;
-import java.util.Queue;
 import java.util.Set;
 import java.util.UUID;
 
@@ -52,13 +50,14 @@ import java.util.UUID;
  * as a central and connect to one or multiple peripherals, read/write their characteristics values
  * and enable notifications.
  *
- * @author Francesca Romana Mattei
  * @author Massimiliano Schembri
+ * @author Francesca Romana Mattei
+ *
  * @
  */
+
 public class GodotBLE extends GodotPlugin
 {
-    enum CharacteristicType{ BYTE, INT, FLOAT, STRING};
     // Used to implement a write characteristic queue
     class WriteCharacteristicRequest
     {
@@ -69,6 +68,9 @@ public class GodotBLE extends GodotPlugin
         public int intValue;
         public float floatValue;
     }
+
+    enum CharacteristicType {BYTE, INT, FLOAT, STRING};
+
     private Activity activity;
 
     // Codes for bluetooth and location enabling requests
@@ -84,11 +86,11 @@ public class GodotBLE extends GodotPlugin
     private BluetoothAdapter bluetoothAdapter;
     private BluetoothLeScanner bluetoothLeScanner;
 
-    // True if a scan is being perfomed, false otherwise
+    // True if a scan is being performed, false otherwise
     private boolean isScanning = false;
 
     // Mapping <device address, GATT object> in order to be able to communicate with more than one peripheral
-    private Map<String, BluetoothGatt> bluetoothGatts = new HashMap<>();;
+    private Map<String, BluetoothGatt> bluetoothGatts = new HashMap<>();
 
     // Maps to convert an UUID (String) to the corresponding Characterisitc/Service object
     private Map<String, Map<String, BluetoothGattCharacteristic>> characteristicMap = new HashMap<>();
@@ -103,30 +105,30 @@ public class GodotBLE extends GodotPlugin
     // List of devices found during the last scanning
     private List<BluetoothDevice> scanResults;
 
-    // List of write string characteristics requests
-    private LinkedList<WriteCharacteristicRequest> writeCharacteristicsQueue= new LinkedList<WriteCharacteristicRequest>() ;
+    // List of write characteristics requests received from the app
+    private LinkedList<WriteCharacteristicRequest> writeCharacteristicsQueue = new LinkedList<WriteCharacteristicRequest>();
 
-    // Device scan callback
+    // Device scan callback. This object contains all the callbacks necessary to manage the scan process
     private ScanCallback leScanCallback =
             new ScanCallback()
             {
+                // This callback is invoked when the scanning process was successful and has some scan results
                 @Override
                 public void onScanResult(int callbackType, ScanResult result)
                 {
                     Log.i("SCANNING", "found device " + result.getDevice().getName() + "with address " + result.getDevice().getAddress());
 
                     BluetoothDevice device = result.getDevice();
-                    if(scanResults.indexOf(device) == -1)
+                    if (scanResults.indexOf(device) == -1)
                     {
                         // Send a signal to Godot with name and address of the device found
-                        if(result.getDevice().getName() != null)
+                        if (result.getDevice().getName() != null)
                             emitSignal("device_found", device.getName(), device.getAddress());
                         else
                             emitSignal("device_found", "", device.getAddress());
 
                         scanResults.add(result.getDevice()); //add the result to the list
                     }
-
                 }
 
                 @Override
@@ -138,61 +140,52 @@ public class GodotBLE extends GodotPlugin
                 }
             };
 
-
     // Callbacks for any operation or change in the connection
     private BluetoothGattCallback gattCallback =
             new BluetoothGattCallback()
             {
                 @Override
-                public void onConnectionStateChange(BluetoothGatt gatt , int status, int newState)
-                {
+                public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
                     String deviceAddress = gatt.getDevice().getAddress();
                     String deviceName = gatt.getDevice().getName();
 
-                    Log.i("BluetoothGattCallback","---bleplugin:ConnectionStateChanged status=".concat(String.valueOf(status)).concat(" newStatus=").concat(String.valueOf(newState)));
+                    Log.i("BluetoothGattCallback", "---bleplugin:ConnectionStateChanged status=".concat(String.valueOf(status)).concat(" newStatus=").concat(String.valueOf(newState)));
 
                     //if there was not an error, check if it was a connection or disconnection
-                    if (status == BluetoothGatt.GATT_SUCCESS)
-                    {
-                        if (newState == BluetoothProfile.STATE_CONNECTED)
-                        {
+                    if (status == BluetoothGatt.GATT_SUCCESS) {
+                        if (newState == BluetoothProfile.STATE_CONNECTED) {
                             Log.w("BluetoothGattCallback", "Successfully connected to ".concat(deviceAddress));
                             bluetoothGatts.put(deviceAddress, gatt); //save the instance of the BluetoothGatt for this connection
                             gatt.discoverServices(); //discover services of the device we are connected to
                             //gatt.requestMtu(512);
                             //Log.i("BluetootGattCallback","---bleplugin:mtu_request_512");
                             emitSignal("device_connected", deviceAddress, deviceName); //send a signal to Godot to say that the connection was successfull
-                        }
-                        else if (newState == BluetoothProfile.STATE_DISCONNECTED)
-                        {
+                        } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                             Log.w("BluetoothGattCallback", "Successfully disconnected from ".concat(deviceAddress));
                             gatt.close();
                             bluetoothGatts.remove(deviceAddress);
                             emitSignal("device_disconnected", deviceAddress, deviceName);//send a signal to Godot to say that the device has been disconnected
                         }
-                    }
-                    else
-                    {
+                    } else {
                         Log.w("BluetoothGattCallback", "Error ".concat(String.valueOf(status)).concat(" encountered for ").concat(deviceAddress).concat("! Disconnecting..."));
                         String connectionErrorMessage = "Connection Error ".concat(String.valueOf(status)).concat(" encountered for ").concat(deviceAddress).concat("! Disconnecting...");
-                        emitSignal("connection_error", connectionErrorMessage);
+                        emitSignal("connection_error", connectionErrorMessage, deviceAddress);
                         gatt.close();
                     }
                 }
 
                 @Override
-                public void onMtuChanged(BluetoothGatt gatt , int mtu, int status)
-                {
-                    Log.i("BluetoothGattCallback","---bleplugin:mut_request, mtu set to:".concat(String.valueOf(mtu)));
+                public void onMtuChanged(BluetoothGatt gatt, int mtu, int status) {
+                    Log.i("BluetoothGattCallback", "---bleplugin:mut_request, mtu set to:".concat(String.valueOf(mtu)));
                     emitSignal("mtu_changed", mtu);
                 }
 
                 @Override
-                public void onServicesDiscovered(BluetoothGatt gatt , int status)
+                public void onServicesDiscovered(BluetoothGatt gatt, int status)
                 {
                     String deviceAddress = gatt.getDevice().getAddress();
                     List<BluetoothGattService> services = gatt.getServices();
-                    if(services.isEmpty()) //if no services found, close the connection
+                    if (services.isEmpty()) //if no services found, close the connection
                     {
                         Log.i("Service discovery", "Services not found");
                         bluetoothGatts.remove(deviceAddress);
@@ -203,12 +196,11 @@ public class GodotBLE extends GodotPlugin
                     //save all the services and characteristics in the correspondent maps
                     Map<String, BluetoothGattService> deviceServices = new HashMap<>();
                     Map<String, BluetoothGattCharacteristic> deviceCharacteristics = new HashMap<>();
-                    for(BluetoothGattService s : services)
-                    {
+                    for (BluetoothGattService s : services) {
                         deviceServices.put(s.getUuid().toString().toLowerCase(), s);
 
                         List<BluetoothGattCharacteristic> serviceCharacteristics = s.getCharacteristics();
-                        for(BluetoothGattCharacteristic c : serviceCharacteristics)
+                        for (BluetoothGattCharacteristic c : serviceCharacteristics)
                             deviceCharacteristics.put(c.getUuid().toString().toLowerCase(), c);
                     }
                     serviceMap.put(deviceAddress, deviceServices);
@@ -220,19 +212,19 @@ public class GodotBLE extends GodotPlugin
                 @Override //Called every time a write with response is performed
                 public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status)
                 {
-                    if(status == BluetoothGatt.GATT_SUCCESS) {
+                    if (status == BluetoothGatt.GATT_SUCCESS)
+                    {
                         Log.i("BluetoothGattCallback", "Wrote to characteristic ".concat(characteristic.getUuid().toString()));
                         emitSignal("characteristic_written", gatt.getDevice().getAddress(), characteristic.getUuid().toString());
 
                         // If characteristic queue is not empty let's write the next characteristic in the queue
-                        if(!writeCharacteristicsQueue.isEmpty())
+                        if (!writeCharacteristicsQueue.isEmpty())
                         {
                             boolean set;
                             WriteCharacteristicRequest nextRequest = writeCharacteristicsQueue.poll();
                             Map<String, BluetoothGattCharacteristic> deviceCharacteristics = characteristicMap.get(nextRequest.deviceAddress);
                             BluetoothGattCharacteristic nextCharacteristic = deviceCharacteristics.get(nextRequest.uuid.toLowerCase());
-                            switch (nextRequest.type)
-                            {
+                            switch (nextRequest.type) {
                                 case INT:
                                     set = characteristic.setValue(nextRequest.intValue, BluetoothGattCharacteristic.FORMAT_UINT32, 0);
                                     break;
@@ -243,7 +235,7 @@ public class GodotBLE extends GodotPlugin
                                     set = characteristic.setValue(intBits, BluetoothGattCharacteristic.FORMAT_UINT32, 0);
                                     break;
                                 case BYTE:
-                                    set = characteristic.setValue(nextRequest.intValue,BluetoothGattCharacteristic.FORMAT_UINT8,0);
+                                    set = characteristic.setValue(nextRequest.intValue, BluetoothGattCharacteristic.FORMAT_UINT8, 0);
                                     break;
                                 case STRING:
                                     set = characteristic.setValue(nextRequest.stringValue);
@@ -253,44 +245,39 @@ public class GodotBLE extends GodotPlugin
                             boolean written = bluetoothGatts.get(nextRequest.deviceAddress).writeCharacteristic(characteristic);
                             // TODO: implement a Godot boolean signal to notify set&written
                         }
-                    }
-                    else if(status == BluetoothGatt.GATT_INVALID_ATTRIBUTE_LENGTH) {
+                    } else if (status == BluetoothGatt.GATT_INVALID_ATTRIBUTE_LENGTH)
+                    {
                         Log.e("BluetoothGattCallback", "Write exceeded connection ATT MTU!");
-                        emitSignal("characteristic_write_error","Write exceeded connection ATT MTU!");
-                    }
-                    else if(status == BluetoothGatt.GATT_WRITE_NOT_PERMITTED) {
+                        emitSignal("characteristic_write_error", "Write exceeded connection ATT MTU!");
+                    } else if (status == BluetoothGatt.GATT_WRITE_NOT_PERMITTED)
+                    {
                         Log.e("BluetoothGattCallback", "Write not permitted for ".concat(characteristic.getUuid().toString()));
-                        emitSignal("characteristic_write_error","Write not permitted for ".concat(characteristic.getUuid().toString()));
-                    }
-                    else {
+                        emitSignal("characteristic_write_error", "Write not permitted for ".concat(characteristic.getUuid().toString()));
+                    } else {
                         Log.e("BluetoothGattCallback", "Characteristic write failed for ".concat(characteristic.getUuid().toString()).concat(", error: ").concat(String.valueOf(status)));
-                        emitSignal("characteristic_write_error","Characteristic write failed for ".concat(characteristic.getUuid().toString()).concat(", error: ").concat(String.valueOf(status)));
+                        emitSignal("characteristic_write_error", "Characteristic write failed for ".concat(characteristic.getUuid().toString()).concat(", error: ").concat(String.valueOf(status)));
                     }
                 }
 
                 @Override //Called every time a read is performed
-                public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status)
-                {
-                    if(status == BluetoothGatt.GATT_SUCCESS)
-                    {
+                public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
+                    if (status == BluetoothGatt.GATT_SUCCESS) {
                         Log.i("BluetoothGattCallback", "Read characteristic ".concat(characteristic.getUuid().toString()));
 
                         //send the UUID and the new value to godot
                         emitSignal("characteristic_read", gatt.getDevice().getAddress(), characteristic.getUuid().toString(), characteristic.getValue());
-                    }
-                    else if(status == BluetoothGatt.GATT_READ_NOT_PERMITTED) {
+                    } else if (status == BluetoothGatt.GATT_READ_NOT_PERMITTED) {
                         Log.e("BluetoothGattCallback", "Read not permitted for ".concat(characteristic.getUuid().toString()));
-                        emitSignal("characteristic_read_error","Read not permitted for ".concat(characteristic.getUuid().toString()));
-                    }
-                    else {
+                        emitSignal("characteristic_read_error", "Read not permitted for ".concat(characteristic.getUuid().toString()));
+                    } else {
                         Log.e("BluetoothGattCallback", "Characteristic read failed for ".concat(characteristic.getUuid().toString()).concat(", error: ").concat(String.valueOf(status)));
-                        emitSignal("characteristic_read_error","Characteristic read failed for ".concat(characteristic.getUuid().toString()).concat(", error: ").concat(String.valueOf(status)));
+                        emitSignal("characteristic_read_error", "Characteristic read failed for ".concat(characteristic.getUuid().toString()).concat(", error: ").concat(String.valueOf(status)));
                     }
                 }
 
-                @Override //Called every time a characteristic we are subscribed to changed its value
-                public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic)
-                {
+                @Override
+                //Called every time a characteristic we are subscribed to changed its value
+                public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
                     Log.i("Character changed", "the characteristic: ".concat(characteristic.getUuid().toString()).concat("changed"));
 
                     //send the UUID and the new value to godot
@@ -298,12 +285,17 @@ public class GodotBLE extends GodotPlugin
                 }
             };
 
+    
+    public GodotBLE(Godot godot) {
+        super(godot);
 
-    public GodotBLE(Godot godot) { super(godot); }
+    }
 
     @NonNull
     @Override
-    public String getPluginName() { return "BLEPlugin"; }
+    public String getPluginName() {
+        return "BLEPlugin";
+    }
 
 
     @NonNull
@@ -350,54 +342,109 @@ public class GodotBLE extends GodotPlugin
         signals.add(new SignalInfo("device_connected", String.class, String.class));
         signals.add(new SignalInfo("device_disconnected", String.class, String.class));
         signals.add(new SignalInfo("mtu_changed", Integer.class));
-        signals.add(new SignalInfo("connection_error", String.class));
+        signals.add(new SignalInfo("connection_error", String.class, String.class));
         signals.add(new SignalInfo("characteristic_read", String.class, String.class, byte[].class));
         signals.add(new SignalInfo("characteristic_read_error", String.class));
         signals.add(new SignalInfo("characteristic_written", String.class, String.class));
         signals.add(new SignalInfo("characteristic_written_error", String.class));
         signals.add(new SignalInfo("characteristic_changed", String.class, String.class, byte[].class));
         signals.add(new SignalInfo("service_discovery_success", String.class));
-        signals.add(new SignalInfo( "ble_initialized"));
-        signals.add(new SignalInfo( "ble_initialization_error", String.class));
+        signals.add(new SignalInfo("ble_initialized"));
+        signals.add(new SignalInfo("ble_initialization_error", String.class));
 
         return signals;
     }
 
+    // Share functions
+    @UsedByGodot
+    public void shareText(String title, String subject, String text)
+    {
+        Log.d("ShareText", "shareText called");
+        Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
+        sharingIntent.setType("text/plain");
+        sharingIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, subject);
+        sharingIntent.putExtra(android.content.Intent.EXTRA_TEXT, text);
+        activity.startActivity(Intent.createChooser(sharingIntent, title));
+    }
+
+    @UsedByGodot
+    public void sharePic(String path, String title, String subject, String text) {
+        Log.d("SharePic", "sharePic called");
+
+        File f = new File(path);
+
+        Uri uri;
+        try {
+            uri = FileProvider.getUriForFile(activity, activity.getPackageName(), f);
+        } catch (IllegalArgumentException e) {
+            Log.e("SharePic", "The selected file can't be shared: " + path);
+            return;
+        }
+
+        Intent shareIntent = new Intent(Intent.ACTION_SEND);
+        shareIntent.setType("image/*");
+        shareIntent.putExtra(Intent.EXTRA_SUBJECT, subject);
+        shareIntent.putExtra(Intent.EXTRA_TEXT, text);
+        shareIntent.putExtra(Intent.EXTRA_STREAM, uri);
+        shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        activity.startActivity(Intent.createChooser(shareIntent, title));
+    }
+
+    @UsedByGodot
+    public void shareTextFile(String path, String title, String subject, String text) {
+        Log.d("ShareTextFile", "sharePic called  filepath=" + path);
+
+        File f = new File(path);
+
+        Uri uri;
+        try {
+            uri = FileProvider.getUriForFile(activity, activity.getPackageName(), f);
+        } catch (IllegalArgumentException e) {
+            Log.e("ShareTextFile", "The selected file can't be shared: " + path);
+            return;
+        }
+
+        Intent shareIntent = new Intent(Intent.ACTION_SEND);
+        shareIntent.setType("text/*");
+        shareIntent.putExtra(Intent.EXTRA_SUBJECT, subject);
+        shareIntent.putExtra(Intent.EXTRA_TEXT, text);
+        shareIntent.putExtra(Intent.EXTRA_STREAM, uri);
+        shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        activity.startActivity(Intent.createChooser(shareIntent, title));
+    }
+
 
     @Override
-    public void onMainActivityResult(int requestCode, int resultCode, Intent data) {
+    public void onMainActivityResult(int requestCode, int resultCode, Intent data)
+    {
         super.onMainActivityResult(requestCode, resultCode, data);
         String activityResult = " ---------->".concat(Integer.toString(requestCode));
-        Log.i("ActivityResult",activityResult);
+        Log.i("ActivityResult", activityResult);
+
         if (requestCode == ENABLE_BLUETOOTH_REQUEST_CODE && resultCode != Activity.RESULT_OK)
         {
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             activity.startActivityForResult(enableBtIntent, ENABLE_BLUETOOTH_REQUEST_CODE);
         }
+
     }
 
     @Override
     public void onMainRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onMainRequestPermissionsResult(requestCode, permissions, grantResults);
-        Log.i("RequestPermissionResult","-------------->".concat(Integer.toString(grantResults[0])));
+        Log.i("RequestPermissionResult", "-------------->".concat(Integer.toString(grantResults[0])));
 
-        /*
-        if(requestCode== 1001)
-        {
-            if(grantResults[0]!=Activity.RESULT_OK)
-                ActivityCompat.requestPermissions(activity,new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1001);
+        // keep asking for required permission until granted
+        if (requestCode == 1001) {
+            if (grantResults[0] != Activity.RESULT_OK)
+                ActivityCompat.requestPermissions(activity, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1001);
         }
-
-         */
-
-
     }
 
     /*
      * This method initializes bluetooth, location and permissions
      */
-    public void initialize()
-    {
+    public void initialize() {
         activity = getActivity();
 
         // Initializes Bluetooth adapter.
@@ -405,30 +452,30 @@ public class GodotBLE extends GodotPlugin
         if (bluetoothManager != null)
         {
             bluetoothAdapter = bluetoothManager.getAdapter();
-            ActivityCompat.requestPermissions(activity,new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1001);
-        }
-        else
-        {
+            ActivityCompat.requestPermissions(activity, new String[]{   Manifest.permission.ACCESS_FINE_LOCATION,
+                                                                        Manifest.permission.BLUETOOTH_SCAN,
+                                                                        Manifest.permission.BLUETOOTH_CONNECT},
+                                                                        1001);
+        } else {
             Log.e("Bluetooth Manager", "Bluetooth Manager impossible to retrieve");
-            emitSignal("ble_initialization_error","Bluetooth Manager impossible to retrieve");
+            emitSignal("ble_initialization_error", "Bluetooth Manager impossible to retrieve");
             return;
         }
 
         // Ensures Bluetooth is available on the device and it is enabled. If not,
         // displays a dialog requesting user permission to enable Bluetooth.
-        if (bluetoothAdapter != null && !bluetoothAdapter.isEnabled())
-        {
+        if (bluetoothAdapter != null && !bluetoothAdapter.isEnabled()) {
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             activity.startActivityForResult(enableBtIntent, ENABLE_BLUETOOTH_REQUEST_CODE);
         }
 
         // Ensures Location is enabled. If not, opens Location Settings
         final LocationManager manager = (LocationManager) activity.getSystemService(Context.LOCATION_SERVICE);
-        if(!manager.isProviderEnabled(LocationManager.GPS_PROVIDER))
-        {
+        if (!manager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
             Intent enableLocation = new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS);
             activity.startActivityForResult(enableLocation, ENABLE_LOCATION_REQUEST_CODE);
         }
+
         emitSignal("ble_initialized");
     }
 
@@ -437,8 +484,7 @@ public class GodotBLE extends GodotPlugin
      * It adds the device name as filter for the scanning
      * @param deviceName
      */
-    public void addScanFilterDeviceName(String deviceName)
-    {
+    public void addScanFilterDeviceName(String deviceName) {
         scanFilter = scanFilter.setDeviceName(deviceName);
     }
 
@@ -447,8 +493,7 @@ public class GodotBLE extends GodotPlugin
      * It adds the device address as filter for the scanning
      * @param deviceAddress
      */
-    public void addScanFilterDeviceAddress(String deviceAddress)
-    {
+    public void addScanFilterDeviceAddress(String deviceAddress) {
         scanFilter = scanFilter.setDeviceAddress(deviceAddress);
     }
 
@@ -457,8 +502,7 @@ public class GodotBLE extends GodotPlugin
      * It adds a service UUID as filter for the scanning
      * @param serviceUUID
      */
-    public void addScanFilterService(String serviceUUID)
-    {
+    public void addScanFilterService(String serviceUUID) {
         scanFilter = scanFilter.setServiceUuid(ParcelUuid.fromString(serviceUUID));
     }
 
@@ -466,8 +510,7 @@ public class GodotBLE extends GodotPlugin
     /**
      * It removes all the filters for the scanning
      */
-    public void resetScanFilters()
-    {
+    public void resetScanFilters() {
         scanFilter = new ScanFilter.Builder();
     }
 
@@ -477,14 +520,16 @@ public class GodotBLE extends GodotPlugin
      */
     public void startScan()
     {
-        if (bluetoothAdapter == null)
-        {
+        if (bluetoothAdapter == null) {
             Log.e("ERROR", "BluetoothAdapter not initialized");
             return;
         }
         bluetoothLeScanner = bluetoothAdapter.getBluetoothLeScanner();
         scanResults = new ArrayList<>();
+        Log.i("SCANNING","Start Scanning");
+
         bluetoothLeScanner.startScan(Collections.singletonList(scanFilter.build()), scanSettings, leScanCallback);
+
         isScanning = true;
     }
 
@@ -494,7 +539,9 @@ public class GodotBLE extends GodotPlugin
      */
     public void stopScan()
     {
-        if(bluetoothLeScanner != null) bluetoothLeScanner.stopScan(leScanCallback);
+        if (bluetoothLeScanner != null)
+            bluetoothLeScanner.stopScan(leScanCallback);
+
         isScanning = false;
     }
 
@@ -506,9 +553,8 @@ public class GodotBLE extends GodotPlugin
     public void connectToDeviceByAddress(String deviceAddress)
     {
         //Search for the device with that address
-        for(BluetoothDevice r : scanResults)
-            if(r.getAddress().equals(deviceAddress))
-            {   // connect
+        for (BluetoothDevice r : scanResults)
+            if (r.getAddress().equals(deviceAddress)) {   // connect
                 r.connectGatt(activity, false, gattCallback, 2);
                 return;
             }
@@ -521,12 +567,11 @@ public class GodotBLE extends GodotPlugin
      */
     public void connectToDeviceByName(String deviceName)
     {
-        for(BluetoothDevice r: scanResults)
+        for (BluetoothDevice r : scanResults)
         {   //look for the desired device
             String name = r.getName();
-            if(name == null) continue;
-            else if(name.equals(deviceName))
-            {   //connect
+            if (name == null) continue;
+            else if (name.equals(deviceName)) {   //connect
                 r.connectGatt(activity, false, gattCallback, 2);
                 return;
             }
@@ -537,9 +582,8 @@ public class GodotBLE extends GodotPlugin
      * Request a specific mtu passed as parameter
      * @param deviceAddress
      */
-    public void requestMtu(String deviceAddress)
-    {
-            bluetoothGatts.get(deviceAddress).requestMtu(512);
+    public void requestMtu(String deviceAddress) {
+        bluetoothGatts.get(deviceAddress).requestMtu(512);
     }
 
     /**
@@ -611,7 +655,8 @@ public class GodotBLE extends GodotPlugin
      */
     private boolean enableNotifications(String deviceAddress, BluetoothGattCharacteristic characteristic, boolean enable)
     {
-        if(characteristic ==  null) return false;
+        if(characteristic ==  null)
+            return false;
 
         BluetoothGatt bluetoothGatt = bluetoothGatts.get(deviceAddress);
 
@@ -645,12 +690,12 @@ public class GodotBLE extends GodotPlugin
             return false;
         }
 
-        if (descriptor == null){
+        if (descriptor == null)
+        {
             Log.w("ConnectionManager", " Descriptor is null for "+characteristic.toString());
-             return false;
+            return false;
         }
-        else {
-
+        else{
             boolean set = descriptor.setValue(payload);
             boolean written = bluetoothGatt.writeDescriptor(descriptor);
 
@@ -669,13 +714,16 @@ public class GodotBLE extends GodotPlugin
     {
         //Check if the given characterisitc exists and can be written
         Map<String, BluetoothGattCharacteristic> deviceCharacteristics = characteristicMap.get(deviceAddress);
-        if(deviceCharacteristics == null) return false;
+        if(deviceCharacteristics == null)
+            return false;
         BluetoothGattCharacteristic characteristic = deviceCharacteristics.get(uuid.toLowerCase());
-        if(!checkWritability(deviceAddress, characteristic)) return false;
+        if(!checkWritability(deviceAddress, characteristic))
+            return false;
 
-        boolean set;
-        boolean written;
-        if(writeCharacteristicsQueue.isEmpty()) {
+        boolean set=false;
+        boolean written=false;
+        if(writeCharacteristicsQueue.isEmpty())
+        {
             //Set the new value and send it
             set = characteristic.setValue(value, BluetoothGattCharacteristic.FORMAT_UINT32, 0);
             written = bluetoothGatts.get(deviceAddress).writeCharacteristic(characteristic);
@@ -704,13 +752,16 @@ public class GodotBLE extends GodotPlugin
     public boolean writeByteCharacteristic(String deviceAddress, String uuid, int value)
     {
         Map<String, BluetoothGattCharacteristic> deviceCharacteristics = characteristicMap.get(deviceAddress);
-        if(deviceCharacteristics == null) return false;
+        if(deviceCharacteristics == null)
+            return false;
         BluetoothGattCharacteristic characteristic = deviceCharacteristics.get(uuid.toLowerCase());
-        if(!checkWritability(deviceAddress, characteristic)) return false;
+        if(!checkWritability(deviceAddress, characteristic))
+            return false;
 
-        boolean set;
-        boolean written;
-        if(writeCharacteristicsQueue.isEmpty()) {
+        boolean set= false;
+        boolean written = false;
+        if(writeCharacteristicsQueue.isEmpty())
+        {
             //Format is UINT8 so that the given int is treated as a byte
             set = characteristic.setValue(value, BluetoothGattCharacteristic.FORMAT_UINT8, 0);
             written = bluetoothGatts.get(deviceAddress).writeCharacteristic(characteristic);
@@ -743,9 +794,10 @@ public class GodotBLE extends GodotPlugin
         BluetoothGattCharacteristic characteristic = deviceCharacteristics.get(uuid.toLowerCase());
         if(!checkWritability(deviceAddress, characteristic)) return false;
 
-        boolean set;
-        boolean written;
-        if(writeCharacteristicsQueue.isEmpty()) {
+        boolean set=false;
+        boolean written=false;
+        if(writeCharacteristicsQueue.isEmpty())
+        {
             set = characteristic.setValue(value);
             written = bluetoothGatts.get(deviceAddress).writeCharacteristic(characteristic);
         }
@@ -778,13 +830,15 @@ public class GodotBLE extends GodotPlugin
         BluetoothGattCharacteristic characteristic = deviceCharacteristics.get(uuid.toLowerCase());
         if(!checkWritability(deviceAddress, characteristic)) return false;
 
-        boolean set;
-        boolean written;
-        if(writeCharacteristicsQueue.isEmpty()) {
+        boolean set=false;
+        boolean written=false;
+        if(writeCharacteristicsQueue.isEmpty())
+        {
             // The float cannot be directly sent, so it is converted to a UINT32 (without truncating it)
             //and the conversion will be done by the receiver
             Integer intBits = Float.floatToIntBits(value);
             set = characteristic.setValue(intBits, BluetoothGattCharacteristic.FORMAT_UINT32, 0);
+
             written = bluetoothGatts.get(deviceAddress).writeCharacteristic(characteristic);
         }
         else{
@@ -807,7 +861,8 @@ public class GodotBLE extends GodotPlugin
      */
     private boolean checkWritability(String deviceAddress, BluetoothGattCharacteristic characteristic)
     {
-        if(characteristic == null) return false;
+        if(characteristic == null)
+            return false;
 
         if (bluetoothAdapter == null)
         {
@@ -844,15 +899,18 @@ public class GodotBLE extends GodotPlugin
     {
         //Check if the characterisitc exists
         Map<String, BluetoothGattCharacteristic> deviceCharacteristics = characteristicMap.get(deviceAddress);
-        if(deviceCharacteristics == null) return false;
+        if(deviceCharacteristics == null)
+            return false;
         BluetoothGattCharacteristic characteristic = deviceCharacteristics.get(uuid.toLowerCase());
-        if(characteristic == null) return false;
+        if(characteristic == null)
+            return false;
 
         if (bluetoothAdapter == null)
         {
             Log.w("ERROR", "BluetoothAdapter not initialized");
             return false;
         }
+
         if(!isReadable(deviceAddress, characteristic.getUuid().toString()))
         {
             Log.w("ERROR", "Characteristic is not readable");
@@ -872,12 +930,15 @@ public class GodotBLE extends GodotPlugin
     public boolean isWritable(String deviceAddress, String uuid)
     {
         Map<String, BluetoothGattCharacteristic> deviceCharacteristics = characteristicMap.get(deviceAddress);
-        if(deviceCharacteristics == null) return false;
+        if(deviceCharacteristics == null)
+            return false;
         BluetoothGattCharacteristic characteristic = deviceCharacteristics.get(uuid.toLowerCase());
-        if(characteristic ==  null) return false;
+        if(characteristic ==  null)
+            return false;
 
         return (characteristic.getProperties() & BluetoothGattCharacteristic.PROPERTY_WRITE) !=0;
     }
+
 
     /**
      * Checks if the given characteristic is writable with no response
@@ -887,9 +948,11 @@ public class GodotBLE extends GodotPlugin
     public boolean isWritableNoResponse(String deviceAddress, String uuid)
     {
         Map<String, BluetoothGattCharacteristic> deviceCharacteristics = characteristicMap.get(deviceAddress);
-        if(deviceCharacteristics == null) return false;
+        if(deviceCharacteristics == null)
+            return false;
         BluetoothGattCharacteristic characteristic = deviceCharacteristics.get(uuid.toLowerCase());
-        if(characteristic ==  null) return false;
+        if(characteristic ==  null)
+            return false;
 
         return (characteristic.getProperties() & BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE) != 0;
     }
@@ -903,9 +966,11 @@ public class GodotBLE extends GodotPlugin
     public boolean isReadable(String deviceAddress, String uuid)
     {
         Map<String, BluetoothGattCharacteristic> deviceCharacteristics = characteristicMap.get(deviceAddress);
-        if(deviceCharacteristics == null) return false;
+        if(deviceCharacteristics == null)
+            return false;
         BluetoothGattCharacteristic characteristic = deviceCharacteristics.get(uuid.toLowerCase());
-        if(characteristic ==  null) return false;
+        if(characteristic ==  null)
+            return false;
 
         return (characteristic.getProperties() & BluetoothGattCharacteristic.PROPERTY_READ) != 0;
     }
@@ -919,9 +984,11 @@ public class GodotBLE extends GodotPlugin
     public boolean isNotifiable(String deviceAddress, String uuid)
     {
         Map<String, BluetoothGattCharacteristic> deviceCharacteristics = characteristicMap.get(deviceAddress);
-        if(deviceCharacteristics == null) return false;
+        if(deviceCharacteristics == null)
+            return false;
         BluetoothGattCharacteristic characteristic = deviceCharacteristics.get(uuid.toLowerCase());
-        if(characteristic ==  null) return false;
+        if(characteristic ==  null)
+            return false;
 
         return (characteristic.getProperties() & BluetoothGattCharacteristic.PROPERTY_NOTIFY) != 0;
     }
