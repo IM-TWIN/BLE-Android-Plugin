@@ -6,6 +6,21 @@ The module to build and use is the one contained in the directory `bleframework/
 
 ## Setup
 
+### Android Studio Version and setup
+
+The BLE Android Plugin consists of an **Android Archive Library (AAR) that is built with Android Studio using the project in this repository. Android Studio projects have many options that must be considered to  make the project build successfully. In particular the following variables must be carefully considered:
+
+- The Android Studio Version itself
+- The Gradle version used by Android Studio
+- The Gradle Plugin version used by Android (this on its turn constraints the usable Gradle version)
+- The Gradle project configuration ( in particular: compileSdkVersion, buildToolsVersion, minSdkVersion, targetSdkVersion )
+- The Android SDK location
+- The Android NKD location
+- The Android JDK location
+- Android Android Platform and SDK Tools (versions of the Android SDK Build Tools, Android SDK Platform Tools, SDK command line tools, NKD etc) 
+- Java SDK Version Installed on the System
+
+
 ### Building the plugin in Android Studio
 
 After downloading this repository, open the relative folder with Android Studio, and then build the module **bleframework**. Once the operation is done, you will find the **Android archive library** (*aar* archive file) in *bleframework/build/outputs/aar/*.
