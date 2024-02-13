@@ -27,7 +27,7 @@ After downloading this repository, open the relative folder with Android Studio,
 
 ### Android Environment in Godot
 
-In order to build an Android application, you need to set up the Godot environment as explained [here](https://docs.godotengine.org/it/stable/getting_started/workflow/export/android_custom_build.html).
+In order to build an Android application, you need to set up the Godot environment as explained [here](https://docs.godotengine.org/en/3.5/tutorials/export/android_custom_build.html).
 
 ### Loading the plugin
 
