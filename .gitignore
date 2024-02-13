@@ -3,6 +3,8 @@
 *.aar
 *.ap_
 *.aab
+# SCHEMBRI: we make an exception for Godot lib files
+!godot-lib*.aar
 
 # Files for the ART/Dalvik VM
 *.dex
